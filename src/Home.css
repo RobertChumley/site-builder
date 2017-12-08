@@ -1,0 +1,58 @@
+
+.Home-header {
+  background-color: #222;
+  height: 100px;
+  padding: 15px;
+  color: white;
+}
+
+.Home-intro {
+  font-size: large;
+}
+.nav-link{
+  cursor: pointer;
+}
+.Home-resources {
+  list-style: none;
+}
+
+.Home-resources > li {
+  display: inline-block;
+  padding: 1rem;
+}
+
+@keyframes Home-logo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.bar rect {
+  fill: steelblue;
+}
+
+.bar text {
+  fill: #fff;
+  font: 10px sans-serif;
+}
+.nav-item{
+  list-style: none;
+  margin-left: 10px;
+
+}
+.form-column{
+  margin-left: 5px;
+  float:left;
+
+}
+.pagination {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.arc text {
+  font: 10px sans-serif;
+  text-anchor: middle;
+}
+
+.arc path {
+  stroke: #fff;
+}

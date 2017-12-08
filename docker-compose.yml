@@ -1,0 +1,19 @@
+version: '2'
+services:
+  site_builder_db:
+    image: mongo:latest
+    container_name: "site_builder_db"
+    environment:
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+    volumes:
+      - ./data/db:/data/db
+    ports:
+      - 27017:27017
+    command: mongod --smallfiles --logpath=/dev/null # --quiet
+
+  site_postgres:
+    image: postgres:latest
+    container_name: "site_postgres"
+    ports:
+      - 5433:5432
