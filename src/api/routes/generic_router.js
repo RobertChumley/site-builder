@@ -14,6 +14,10 @@ export class GenericRouter extends RouterBase{
         let schema = await this.controller.schema(req.table);
         res.json({data:schema});
     }
+    async history(id, req, res) {
+        let history = await this.controller.history(id, req.table);
+        res.json({data:history});
+    }
     async search(req, res) {
         let data= await this.controller.getRecords(req.query || {},req.table);
         let schema = await this.controller.schema(req.table);

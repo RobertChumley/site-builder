@@ -2,6 +2,8 @@
 import MongoClient from 'mongodb';
 import {DefaultSchemas} from "../data/default_schema";
 import atob from 'atob';
+import { compare } from 'fast-json-patch'
+
 export class SchemaController{
     constructor(params){
         this.collection = params.collection;
@@ -25,6 +27,15 @@ export class SchemaController{
             });
             let inserted = await this.db.collection(collection_name || this.collection).insertMany(insert_many);
             return inserted;
+        }catch(e){
+            console.log(e.toString());
+            return {};
+        }
+    }
+    async history(id, collection_name){
+        if(!this.db) await this.connectDb();
+        try {
+            return this.db.collection((collection_name || this.collection) + "_versions").findOne({"_id": new MongoClient.ObjectID(id)});
         }catch(e){
             console.log(e.toString());
             return {};
@@ -102,12 +113,13 @@ export class SchemaController{
     async add(data, collection_name){
         if(!this.db) await this.connectDb();
         try{
-
+            //to-do: have a full user integration here
             let inserted = await this.db.collection(collection_name || this.collection).insertOne(data);
+            await this.auditRecord(data._id, data, collection_name);
             if(data.parent_collection &&  data.parent_id){
                 let parent = await this.db.collection(data.parent_collection).findOne({"_id":new MongoClient.ObjectID(data.parent_id) });
                 parent[collection_name] = parent[collection_name] || [];
-                parent[collection_name].push(data._id);
+                parent[collection_name].push(data._id.toString());
                 await this.db.collection(data.parent_collection).save(parent);
             }
             return inserted;
@@ -123,6 +135,7 @@ export class SchemaController{
             if(schema.child_collection){
                  delete data[schema.child_collection.table_name];
             }
+            await this.auditRecord(id, data, collection_name);
             delete data._id;
             return this.db.collection(collection_name || this.collection).updateOne({"_id":new MongoClient.ObjectID(id)}, data);
         }catch(e){
@@ -130,6 +143,7 @@ export class SchemaController{
             return {};
         }
     }
+
     async patch(id, data, collection_name){
         if(!this.db) await this.connectDb();
         try{
@@ -137,11 +151,28 @@ export class SchemaController{
             if(schema.child_collection){
                 delete data[schema.child_collection.table_name];
             }
+            await this.auditRecord(id, data, collection_name);
             delete data._id;
             return this.db.collection(collection_name || this.collection).updateOne({"_id":new MongoClient.ObjectID(id)}, {$set: data} )
         }catch(e){
             console.log(e.toString());
             return {};
+        }
+    }
+    async auditRecord(id, data, collection_name){
+        let version_history = await this.db.collection((collection_name || this.collection) + "_versions").findOne({"_id":new MongoClient.ObjectID(id) });
+        let original = await this.db.collection(collection_name || this.collection).findOne({"_id":new MongoClient.ObjectID(id) });
+        original._id = data._id;
+        let output = compare(original,data);
+        console.log("output of changes",output);
+        if(output.length === 0 && version_history)
+            return;
+        if(version_history){
+            version_history.ops.push({operation:"updated",changes:output,op_on: new Date()});
+            await this.db.collection((collection_name || this.collection) + "_versions").save(version_history);
+        }
+        else{
+            await this.db.collection((collection_name || this.collection) + "_versions").insertOne({_id: new MongoClient.ObjectID(id),ops:[{operation:"created",op_on: new Date(), changes:output }]});
         }
     }
     async deleteOne(id, collection_name){

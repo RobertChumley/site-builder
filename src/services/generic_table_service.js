@@ -58,4 +58,8 @@ export class GenericTableService extends EventEmitter{
         let ret = await axios.get(`/api/${this.props.table_name}/_schema`,{});
         return ret.data;
     }
+    async history(id){
+        let ret = await axios.get(`/api/${this.props.table_name}/${id}/_history`,{});
+        return ret.data;
+    }
 }

@@ -48,11 +48,11 @@ export class DefaultSchemas{
                 table_name:"tables",
                 child_collection: {table_name:"fields",title:"Fields",routes:[{route_key:"add",route_dest:"System#NewField"}]},
                 fields: [ {
-                    link:"System#NewTable",
-                    link_field: "_id",
-                    field_name:"Table Name",
-                    data_type:"string",
-                    field_code:"table_name" },
+                        link:"System#NewTable",
+                        link_field: "_id",
+                        field_name:"Table Name",
+                        data_type:"string",
+                        field_code:"table_name" },
                     {
 
                         field_name:"System Label",
@@ -62,7 +62,22 @@ export class DefaultSchemas{
 
                         field_name:"Has Child",
                         data_type:"checkbox",
-                        field_code:"child" }
+                        field_code:"child" },
+                    {
+
+                        field_name:"Display Field",
+                        data_type:"string",
+                        field_code:"display_field" },
+                    {
+
+                        field_name:"Data Display Type",
+                        data_type:"pick_list",
+                        field_code:"display_type",
+                        options:[
+                            {value:"table_display", display:"Generic Table"},
+                            {value:"calendar_display", display:"Calendar View"}
+                        ]
+                    }
                 ]
             },
             "external_apis":{

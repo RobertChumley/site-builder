@@ -3,8 +3,13 @@ import express from 'express';
 import {TablesRouter} from "./api/routes/tables_router";
 import {GenericRouter} from "./api/routes/generic_router";
 import {ExternalApiRequestRouter} from "./api/routes/external_api_request_router";
+import {Scheduler} from "./api/services/Scheduler";
 const assets = require(process.env.RAZZLE_ASSETS_MANIFEST);
 const server = express();
+
+let scheudler = new Scheduler();
+scheudler.startJob({});
+
 server.use("*", (req, res, next) =>{
     res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
     res.header('Expires', '-1');
@@ -42,6 +47,7 @@ server
                   crossorigin="anonymous"></script>
                   <script src="https://d3js.org/d3.v4.min.js"></script>
                   <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+                  
             </head>
             <body>
                 <div id="root"></div>

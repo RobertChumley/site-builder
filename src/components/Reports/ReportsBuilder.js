@@ -133,6 +133,9 @@ export class ReportsBuilder extends Component{
                 case "histogram":
                     reportTest.renderHistogram(Object.assign({},this.state.controls,{data:tables_data.data.data}));
                     break;
+                case "scatterwithregression":
+                    reportTest.renderScatterWithRegression(Object.assign({},this.state.controls,{data:tables_data.data.data}));
+                    break;
                 default:
                     reportTest.render(Object.assign({},this.state.controls,{data:tables_data.data.data}));
             }
@@ -183,7 +186,7 @@ export class ReportsBuilder extends Component{
                 <div className={"col-md-3"}><DropDownList value={{display: this.state.controls["report_type"]}}
                                                           onChange={this.onDDChange.bind(this)}
                                                           name={"report_type"}
-                                                          options={[{display:"pie",value:"pie"},{display:"histogram",value:"histogram"}]}/> &nbsp;
+                                                          options={[{display:"pie",value:"pie"},{display:"histogram",value:"histogram"},{display:"Scatter with Regression",value:"scatterwithregression"}]}/> &nbsp;
                     <PickListDefiner obj={this.state.controls["params"] || {}} onChange={this._paramDefineChange.bind(this)}/>
                 </div>
             </div>
@@ -198,6 +201,8 @@ export class ReportsBuilder extends Component{
                     <button className={"btn btn-primary"} onClick={this._save.bind(this)}>Save</button>&nbsp;<button className={"btn btn-primary"} onClick={this._refresh.bind(this)}>Refresh</button>
                 </div>
             </div>
+            <div className={"equation"}/>
+            <div className={"equation"}/>
             <div className={"report"} />
         </div>
     }

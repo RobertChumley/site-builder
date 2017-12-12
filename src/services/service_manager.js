@@ -6,6 +6,7 @@ import EventEmitter from 'events';
 import React from 'react';
 import {TableMasterComponent} from "../components/TableDriver/TableMasterComponent";
 import {FormMasterComponent} from "../components/FormDriver/FormMasterComponent";
+import {CalendarMasterComponent} from "../components/CalendarDriver/CalendarMasterComponent";
 
 export class ServiceManager extends EventEmitter{
     constructor(){
@@ -31,8 +32,10 @@ export class ServiceManager extends EventEmitter{
         ObjContainer.resolve('nav').addRoutes(routes);
         let retComponent = {};
         this.tables.forEach((table,index)=>{
+            console.log("table",table);
             retComponent[`${table.table_name}#${table.table_name}`] =  (<div key={`${table.table_name}-${table.table_name}`}>
-                <TableMasterComponent config={{table_name:`${table.table_name}`,title:`${table.system_label || table.table_name}`,routes:[{route_key:"add",route_dest:`${table.table_name}#New${table.table_name}`}] }} />
+                {(!table.display_type || (table.display_type  && table.display_type.value === "table_display")) && <TableMasterComponent config={{table_name:`${table.table_name}`,title:`${table.system_label || table.table_name}`,routes:[{route_key:"add",route_dest:`${table.table_name}#New${table.table_name}`}] }} />}
+                {(table.display_type  && table.display_type.value === "calendar_display") && <CalendarMasterComponent/>}
             </div>);
             retComponent[`${table.table_name}#New${table.table_name}`] = (<div key={`${table.table_name}-${table.table_name}-new`}>
                 <FormMasterComponent config={{table_name:`${table.table_name}`,title:`New ${table.system_label || table.table_name}`,routes:[{route_key:"list",route_dest:`${table.table_name}#${table.table_name}`}]}} />

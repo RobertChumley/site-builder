@@ -3,7 +3,8 @@ import {ObjContainer} from "../../services/object_container";
 import {TableMasterComponent} from "../TableDriver/TableMasterComponent";
 import TimesCircle from 'react-icons/lib/fa/times-circle';
 import FaSearch from 'react-icons/lib/fa/search';
-
+import FaEye from 'react-icons/lib/fa/eye';
+import moment from 'moment';
 class ReferenceSelector extends Component{
     constructor(params){
         super();
@@ -262,10 +263,104 @@ let FormDefinition = (params) =>{
           <ButtonGroup ops={params.ops}/>
       </div>);
 };
-let SetupTabs = (params) =>{
-    if(params.tab_def.length === 0){
-        return (<div></div>);
+
+let Popup = (content)=>{
+    let renderBackdrop = () => {
+        if (content.show ) {
+            return (
+                <div
+                    className={'modal-backdrop fade ' +  (content.show ?  "show" :"")}
+                    role="presentation"
+                />
+            );
+        }
+        return null;
+    };
+    return (
+        <span>
+            <div className={'modal ' + (content.show ? "show" : "")}
+                 id="myModal"
+                 style={{ display: ((content.show) ? 'block' : 'none') }}
+                 tabIndex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                 aria-hidden={!content.show}>
+                <div className="modal-dialog" role="document">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <div className="modal-title" id="exampleModalLabel">{content.title}
+                                <button type="button" className="close" data-dismiss="modal" aria-label="Close" onClick={content.closeModal.bind(this)}>
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div className="modal-body">
+                            {content.children}
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-secondary" data-dismiss="modal" onClick={content.closeModal.bind(this)}>Close</button>
+                            <button type="button" className="btn btn-primary" onClick={content.save.bind(this)}>Save changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {renderBackdrop()}
+        </span>);
+};
+class SettingsArea extends Component{
+    constructor(){
+        super();
+        this.state = {show:false,history:[],vis_items:{}};
+        this.service_manager = ObjContainer.resolve("service_manager");
     }
+    async _showModal(){
+        let tables_data = await this.service_manager.resolve(this.props.table_name).history(this.props._id);
+        this.setState({history:tables_data.data,show:true});
+    }
+    _closeModal(){
+        this.setState({show:false});
+    }
+    _save(){
+        this.setState({show:true});
+    }
+    showDetails(index, e){
+        this.state.vis_items["show_history"+index] = !this.state.vis_items["show_history"+index];
+        this.setState({vis_items:this.state.vis_items});
+    }
+    render(){
+        //{ op: 'replace', path: '/iata_code', value: 'LAX' }
+        return (<div>
+            <h1>Settings</h1>
+            <div>
+                <a className={"nav-link"} onClick={this._showModal.bind(this)}>History</a>
+                <Popup title={"History"} closeModal={this._closeModal.bind(this)} save={this._save.bind(this)} show={this.state.show}>
+                    <table className={"table"}><thead><tr><th>Date</th><th>Change</th></tr></thead>
+                        <tbody>
+                            {((this.state.history || {ops:[]}).ops || []).map((item, index)=>{
+                                return (<tr key={"history_item_row_" + index}><td>{moment(item.op_on).format('MMMM Do YYYY, h:mm:ss a')}</td><td>{item.operation}</td><td>
+                                    <a className={"nav-link"} onMouseEnter={this.showDetails.bind(this,index)} ><FaEye /></a>
+                                    <div style={{display:this.state.vis_items["show_history"+index] ? "block" : "none",position:"absolute"}}>
+                                        <div style={{border: "1px solid silver", borderRadius:"5px", padding: "5px",backgroundColor: "white",width:"200px"}}>
+                                            <h4>List of Changes</h4>
+                                            {item.changes.map((change, c_index)=>{
+                                                return (
+                                                    <div>
+                                                        <span style={{fontWeight:"bold"}}>{change.op}:</span><span>{change.path}</span> -> <span>
+                                                        {change.value instanceof Object ? (change.value.display || JSON.stringify(change.value)) : change.value}</span>
+
+                                                    </div>
+                                                )
+                                            })}
+
+                                    </div></div>
+                                </td></tr>)
+                            })}
+                        </tbody></table>
+                </Popup>
+            </div>
+        </div>);
+    }
+}
+let SetupTabs = (params) =>{
+
     let first_1 = true;
     let first_2 = true;
     return (<div style={{marginTop: "10px"}}>
@@ -278,8 +373,8 @@ let SetupTabs = (params) =>{
                 first_1 = false;
                 return ret;
             })}
-            <li className="nav-item">
-                <a className="nav-link" data-toggle="tab" href="#settings" role="tab">Settings</a>
+            <li  className={"nav-item " + (first_1 ? "active": "" )}>
+                <a className={"nav-item " + (first_1 ? "active": "" )} data-toggle="tab" href="#settings" role="tab">Settings</a>
             </li>
         </ul>
         <div className="tab-content">
@@ -288,7 +383,7 @@ let SetupTabs = (params) =>{
                 first_2 = false;
                 return ret;
             })}
-            <div className="tab-pane" id="settings" role="tabpanel">pane 3</div>
+            <div className={"tab-pane " + (first_2 ? "active": "" )} id="settings" role="tabpanel"><SettingsArea _id={params._id} table_name={params.table_name} /></div>
         </div>
 
 
@@ -482,9 +577,6 @@ export class FormMasterComponent extends Component{
         this.data_def = await this.service_manager.resolve(config.table_name).schema({});
         let obj = {};
         if(param_state.route_params && param_state.route_params.filter){
-            if(this.data_def.data.child_collection){
-                param_state.route_params["expand"] = [this.data_def.data.child_collection.table_name]
-            }
             obj = await this.service_manager.resolve(config.table_name).getById(param_state.route_params);
         }
         obj = Object.assign({},obj,this.state.param_state.parent_data || {});
@@ -518,8 +610,7 @@ export class FormMasterComponent extends Component{
         this.service_manager.resolve("fields").removeAllListeners("field_update")
     }
     _onChange(field_code,value, e){
-        console.log(field_code, value);
-        let old_obj = Object.assign({},this.state.obj);
+        let old_obj = this.state.obj;
         this.state.obj[field_code] = value || e.target.value;
         let dropins = [];
 
@@ -531,10 +622,8 @@ export class FormMasterComponent extends Component{
                 });
                 dropins.push(dropinBase);
             }else if((field.data_type === 'pick_list' || field.data_type ==='checkbox')  && old_obj[field.field_code] && g_dropins[old_obj[field.field_code].value]){
-                console.log("Deleting field code value");
                 let dropin = g_dropins[old_obj[field.field_code].value];
                 delete this.state.obj[dropin.name];
-
             }
         });
         this.setState({obj:this.state.obj,dropins});
@@ -542,6 +631,9 @@ export class FormMasterComponent extends Component{
     _onDefine(){
     }
     async _onSave(){
+        if(this.props.config.display_field)
+            this.state.obj["display"] = this.state.obj[this.props.config.display_field];
+
         await this.service_manager.resolve(this.props.config.table_name).upsert(this.state.obj._id,this.state.obj);
         if(this.state.param_state.parent_data){
             ObjContainer.resolve("nav").navTo(this.state.param_state.parent_data.back_state.path, this.state.param_state.parent_data.back_state);
@@ -567,7 +659,7 @@ export class FormMasterComponent extends Component{
                 content: (<TableMasterComponent config={this.state.schema_def.child_collection}
                                                 parent_data={{
                                                     parent_collection: this.state.schema_def.table_name,
-                                                    parent_id: this.state.param_state.route_params.filter._id }}/>)});
+                                                    parent_id: this.state.param_state.route_params.filter._id }} />)});
         }
         tab_def = tab_def.concat(this.state.dropins);
         return (
@@ -575,9 +667,9 @@ export class FormMasterComponent extends Component{
                 <h2>{this.props.config.title}</h2>
                 <FormDefinition definition={this.state.schema_def} obj={this.state.obj} ops={{onSave: this._onSave.bind(this),
                     onChange: this._onChange.bind(this), onCancel: this._onCancel.bind(this),onDefine:this._onDefine.bind(this) }}/>
-
-                <SetupTabs tab_def={tab_def} onChange={this._onDataChange.bind(this)}/>
-
+                {this.state.obj._id &&
+                    <SetupTabs tab_def={tab_def} onChange={this._onDataChange.bind(this)} table_name={this.state.schema_def.table_name} _id={this.state.obj._id}/>
+                }
             </div>);
     }
 }

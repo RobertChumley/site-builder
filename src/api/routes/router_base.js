@@ -11,6 +11,9 @@ export class RouterBase{
     router(){
         return this.router;
     }
+    async history(id, req,res){
+
+    }
     async search(req, res) {
 
     }
@@ -51,6 +54,10 @@ export class RouterBase{
         this.router.param('id', (req, res, next, id) => {
             req.id = id;
             next();
+        });
+        this.router.route('/:id/_history').get((req, res) => {
+            this.history(req.id, req, res).then(data => data)
+                .catch(err => res.json({ error: true, message: err.toString() }));
         });
         this.router.route('/:id').get((req, res) => {
             this.getById(req.id, req, res).then(data => data)
